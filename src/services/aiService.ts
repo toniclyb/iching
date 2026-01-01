@@ -5,6 +5,7 @@ export interface FullDivinationResult {
     explanation: string;
     movingLinesExplanation: string;
     coreInterpretation: string;
+    fortune: string;
     verse: string;
     details: string;
 }
@@ -44,6 +45,7 @@ JSON 结构如下：
   "explanation": "白话简述本卦核心哲理",
   "movingLinesExplanation": "变爻原文及启发(若有)",
   "coreInterpretation": "针对用户事项的3-5句明确指引，需要简单直白，不要使用晦涩难懂的词语",
+  "fortune": "给出明确的吉凶评估结果，如：大吉、吉、小吉、平、小吝、忧、厉、凶、大凶。限4字以内",
   "verse": "四句押韵偈言",
   "details": "象数分析等深度内容"
 }
@@ -69,6 +71,7 @@ JSON 结构如下：
                 explanation: data.explanation || "",
                 movingLinesExplanation: data.movingLinesExplanation || "",
                 coreInterpretation: data.coreInterpretation || "解卦暂无结果",
+                fortune: data.fortune || "平",
                 verse: data.verse || "",
                 details: data.details || ""
             };
@@ -124,6 +127,7 @@ JSON 结构如下：
                             explanation: content.explanation || "",
                             movingLinesExplanation: content.movingLinesExplanation || "",
                             coreInterpretation: content.coreInterpretation || "",
+                            fortune: content.fortune || "平",
                             verse: content.verse || "",
                             details: content.details || ""
                         };
@@ -142,6 +146,7 @@ JSON 结构如下：
             explanation: "暂时无法连接到先贤智慧，请检查网络或部署状态。",
             movingLinesExplanation: "",
             coreInterpretation: "解卦过程中出现一点波动，请您稍后再试。",
+            fortune: "平",
             verse: "万物皆波动，心诚则灵通。\n暂待时机至，妙算在其中。",
             details: "AI 代理服务调用失败。详细信息: " + (e instanceof Error ? e.message : String(e))
         };

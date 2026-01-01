@@ -43,6 +43,7 @@ export interface GeminiResponse {
 
 export interface InterpretationResult {
   coreInterpretation: string; // 核心解读
+  fortune: string; // 吉凶评估 (如：大吉 / 凶 / 平)
   verse: string; // 四句偈言
   details: string; // 补充说明
 }

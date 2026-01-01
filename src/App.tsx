@@ -162,6 +162,7 @@ export default function App() {
         } as any);
         setFinalResult({
             coreInterpretation: result.coreInterpretation,
+            fortune: result.fortune,
             verse: result.verse,
             details: result.details
         });
@@ -185,6 +186,7 @@ export default function App() {
         } as any);
         setFinalResult({
             coreInterpretation: res.coreInterpretation,
+            fortune: res.fortune,
             verse: res.verse,
             details: res.details
         });
@@ -421,6 +423,7 @@ export default function App() {
     const copyToClipboard = () => {
         if (!hexInfo || !finalResult) return;
         const text = `【${hexInfo.nameZh}】${transHexInfo ? ` → ${transHexInfo.nameZh}` : ''}
+【${finalResult.fortune}】
 
 ${safeRenderString(finalResult.coreInterpretation)}
 
@@ -449,6 +452,13 @@ ${finalResult.verse}`;
             console.error("Save image error:", err);
             alert("保存图片失败，请稍后再试");
         }
+    };
+
+    const getFortuneColor = (fortune: string) => {
+        if (fortune.includes('大吉') || fortune.includes('吉')) return 'text-amber-400 border-amber-500/50 bg-amber-900/20';
+        if (fortune.includes('凶') || fortune.includes('厉')) return 'text-red-400 border-red-500/50 bg-red-900/20';
+        if (fortune.includes('忧') || fortune.includes('吝')) return 'text-orange-400 border-orange-500/50 bg-orange-900/20';
+        return 'text-slate-300 border-slate-500/50 bg-slate-800/50';
     };
 
     const renderFinalResult = () => (
@@ -502,7 +512,12 @@ ${finalResult.verse}`;
 
                             {/* 卦象指引 - 放在卦名区域内 */}
                             {finalResult?.coreInterpretation && (
-                                <div className="mt-6 pt-4 border-t border-slate-700/50">
+                                <div className="mt-6 pt-4 border-t border-slate-700/50 relative">
+                                    {finalResult.fortune && (
+                                        <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-0.5 rounded-full border text-xs font-bold tracking-widest shadow-lg z-10 ${getFortuneColor(finalResult.fortune)}`}>
+                                            {finalResult.fortune}
+                                        </div>
+                                    )}
                                     <div className="text-slate-200 leading-relaxed prose prose-invert prose-amber max-w-none text-left">
                                         <ReactMarkdown>
                                             {safeRenderString(finalResult.coreInterpretation)}
