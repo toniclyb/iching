@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import html2canvas from 'html2canvas';
 import { AppState, DivinationMethod } from './types';
 import type { LineValue, HexagramInfo, GeminiResponse, InterpretationResult } from './types';
 
@@ -56,6 +57,7 @@ export default function App() {
     const [state, setState] = useState<AppState>(AppState.HOME);
     const [method, setMethod] = useState<DivinationMethod>(DivinationMethod.COINS);
     const [skipAnimation, setSkipAnimation] = useState(false);
+    const [showMethods, setShowMethods] = useState(false); // 控制方法选择的折叠状态
 
     // Audio
     const audioRef = useRef<HTMLAudioElement>(null);
@@ -75,6 +77,7 @@ export default function App() {
 
     // Animation Refs
     const [animStep, setAnimStep] = useState(0); // 0-6
+    const resultRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (audioRef.current) {
@@ -192,61 +195,81 @@ export default function App() {
 
     const renderHome = () => (
         <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 w-full px-4">
-            <h1 className="text-6xl md:text-8xl font-cinzel text-amber-500 text-shadow-glow">
-                易 经
+            <h1 className="text-5xl md:text-7xl font-cinzel text-amber-500 text-shadow-glow tracking-widest">
+                灵 境 易 理
             </h1>
             <p className="text-xl text-slate-300 font-serif italic max-w-lg text-center">
                 「天人合一，卜筮知机」
             </p>
 
             <div className="bg-slate-900/50 p-6 md:p-8 rounded-xl border border-amber-800/30 backdrop-blur-md w-full max-w-full md:max-w-2xl lg:max-w-3xl">
-                {/* 占卜方法选择 */}
-                <label className="block text-amber-200 mb-3 text-center text-lg">选择占卜方法</label>
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                    {Object.values(DivinationMethod).map((m) => (
-                        <button
-                            key={m}
-                            onClick={() => setMethod(m)}
-                            className={`p-2 border rounded transition-all duration-300 text-sm ${method === m
-                                ? 'border-amber-500 bg-amber-900/40 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
-                                : 'border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white'
-                                }`}
-                        >
-                            {m === 'coins' ? '铜钱法' :
-                                m === 'yarrow' ? '蓍草法' :
-                                    m === 'plum' ? '梅花易数' : '随机起卦'}
-                        </button>
-                    ))}
-                </div>
-
-                {/* 问卦分类 */}
+                {/* 1. 问卦分类 (置顶) */}
                 <label className="block text-amber-200 mb-3 text-center text-lg">问卦事项</label>
-                <div className="grid grid-cols-4 gap-2 mb-4">
+                <div className="grid grid-cols-4 gap-2 mb-6">
                     {COMMON_CATEGORIES.map(cat => (
                         <button
                             key={cat}
                             onClick={() => setCategory(category === cat ? '' : cat)}
-                            className={`p-2 text-xs border rounded hover:border-amber-500 transition-colors ${category === cat ? 'bg-amber-800 border-amber-500 text-white' : 'border-slate-700 text-slate-300 hover:text-white'}`}
+                            className={`p-2 text-xs border rounded hover:border-amber-500 transition-all ${category === cat ? 'bg-amber-800 border-amber-500 text-white shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'border-slate-700 text-slate-300 hover:text-white'}`}
                         >
                             {cat}
                         </button>
                     ))}
                 </div>
 
-                {/* 具体问题 */}
+                {/* 2. 具体问题 */}
                 <textarea
                     value={userQuery}
                     onChange={(e) => setUserQuery(e.target.value)}
                     placeholder="具体问题（可选）：例如北方的工作机会是否适合我？"
-                    className="w-full bg-slate-800 border border-slate-700 rounded p-3 text-amber-100 focus:outline-none focus:border-amber-500 h-20 resize-none text-sm mb-4"
+                    className="w-full bg-slate-800 border border-slate-700 rounded p-3 text-amber-100 focus:outline-none focus:border-amber-500 h-20 resize-none text-sm mb-6"
                 />
+
+                {/* 3. 占卜方法选择 (折叠区域) */}
+                <div className="mb-6 border-t border-slate-800 pt-4">
+                    <button
+                        onClick={() => setShowMethods(!showMethods)}
+                        className="flex items-center justify-center w-full text-slate-500 hover:text-amber-400/80 transition-colors text-sm gap-2"
+                    >
+                        <span>占卜方法：{
+                            method === 'coins' ? '铜钱法' :
+                                method === 'yarrow' ? '蓍草法' :
+                                    method === 'plum' ? '梅花易数' : '随机起卦'
+                        }</span>
+                        <svg className={`w-4 h-4 transition-transform ${showMethods ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    {showMethods && (
+                        <div className="grid grid-cols-2 gap-3 mt-4 animate-fade-in">
+                            {Object.values(DivinationMethod).map((m) => (
+                                <button
+                                    key={m}
+                                    onClick={() => {
+                                        setMethod(m);
+                                        setShowMethods(false);
+                                    }}
+                                    className={`p-2 border rounded transition-all duration-300 text-sm ${method === m
+                                        ? 'border-amber-500 bg-amber-900/40 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+                                        : 'border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white'
+                                        }`}
+                                >
+                                    {m === 'coins' ? '铜钱法' :
+                                        m === 'yarrow' ? '蓍草法' :
+                                            m === 'plum' ? '梅花易数' : '随机起卦'}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
                 {/* 跳过动画 */}
                 <div className="flex items-center justify-center space-x-3 mb-6 cursor-pointer" onClick={() => setSkipAnimation(!skipAnimation)}>
                     <div className={`w-4 h-4 border border-amber-600 rounded flex items-center justify-center ${skipAnimation ? 'bg-amber-600' : ''}`}>
                         {skipAnimation && <span className="text-xs">✓</span>}
                     </div>
-                    <span className="text-slate-300 text-sm">跳过起卦动画</span>
+                    <span className="text-slate-300 text-sm">跳过起卦过程</span>
                 </div>
 
                 <button
@@ -254,10 +277,10 @@ export default function App() {
                     disabled={!category}
                     className={`w-full py-4 font-cinzel text-xl rounded shadow-lg transform transition-all border border-amber-400/20 ${!category
                         ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
-                        : 'bg-gradient-to-r from-amber-700 to-amber-600 hover:from-amber-600 hover:to-amber-500 text-white hover:-translate-y-1'
+                        : 'bg-gradient-to-r from-amber-700 to-amber-600 hover:from-amber-600 hover:to-amber-500 text-white hover:-translate-y-1 shadow-[0_10px_20px_-10px_rgba(180,83,9,0.5)]'
                         }`}
                 >
-                    {category ? '卜筮问卦' : '请先选择问卦事项'}
+                    {category ? '开启灵境之门' : '请先选择问卦事项'}
                 </button>
             </div>
         </div>
@@ -406,6 +429,28 @@ ${finalResult.verse}`;
         alert('已复制到剪贴板');
     };
 
+    const handleSaveImage = async () => {
+        if (!resultRef.current) return;
+
+        try {
+            const canvas = await html2canvas(resultRef.current, {
+                backgroundColor: '#020617', // Match slate-950
+                scale: 2, // Higher quality
+                logging: false,
+                useCORS: true
+            });
+
+            const image = canvas.toDataURL("image/png");
+            const link = document.createElement('a');
+            link.href = image;
+            link.download = `iching-result-${hexInfo?.nameZh || '卦象'}.png`;
+            link.click();
+        } catch (err) {
+            console.error("Save image error:", err);
+            alert("保存图片失败，请稍后再试");
+        }
+    };
+
     const renderFinalResult = () => (
         <div className="w-full max-w-full md:max-w-4xl mx-auto px-4 py-6 space-y-6">
             {state === AppState.INTERPRETATION_LOADING ? (
@@ -415,64 +460,68 @@ ${finalResult.verse}`;
                 </div>
             ) : (
                 <>
-                    {/* 卦象区域 - 压缩展示 */}
-                    <div className="bg-slate-900/80 border border-amber-800/30 rounded-xl p-4 md:p-6">
-                        <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
-                            {hexInfo && (
-                                <div className="text-center">
-                                    <div className="text-3xl md:text-4xl font-bold text-amber-500 font-serif">{hexInfo.nameZh}</div>
-                                    <div className="mt-2">
-                                        <span className="px-1.5 py-0.5 bg-amber-900/60 border border-amber-700/50 rounded text-[10px] text-amber-200 font-serif whitespace-nowrap">本卦</span>
+                    {/* 截图区域开始 - 仅包含卦象和解析 */}
+                    <div ref={resultRef} className="space-y-6 p-4 rounded-xl bg-slate-950">
+                        {/* 卦象区域 - 压缩展示 */}
+                        <div className="bg-slate-900/80 border border-amber-800/30 rounded-xl p-4 md:p-6">
+                            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
+                                {hexInfo && (
+                                    <div className="text-center">
+                                        <div className="text-3xl md:text-4xl font-bold text-amber-500 font-serif">{hexInfo.nameZh}</div>
+                                        <div className="mt-2">
+                                            <span className="px-1.5 py-0.5 bg-amber-900/60 border border-amber-700/50 rounded text-[10px] text-amber-200 font-serif whitespace-nowrap">本卦</span>
+                                        </div>
+                                        {/* 卦象图形 */}
+                                        <div className="mt-3 flex justify-center">
+                                            <HexagramDisplay lines={lines} small />
+                                        </div>
                                     </div>
-                                    {/* 卦象图形 */}
-                                    <div className="mt-3 flex justify-center">
-                                        <HexagramDisplay lines={lines} small />
-                                    </div>
+                                )}
+                                {transHexInfo && (
+                                    <>
+                                        <span className="text-2xl text-amber-600/50">→</span>
+                                        <div className="text-center">
+                                            <div className="text-3xl md:text-4xl font-bold text-amber-400 font-serif">{transHexInfo.nameZh}</div>
+                                            <div className="mt-2">
+                                                <span className="px-1.5 py-0.5 bg-amber-800/60 border border-amber-600/50 rounded text-[10px] text-amber-100 font-serif whitespace-nowrap">变卦</span>
+                                            </div>
+                                            {/* 变卦卦象 */}
+                                            <div className="mt-3 flex justify-center">
+                                                <HexagramDisplay lines={transLines} small />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            {category && (
+                                <div className="text-center mt-3 text-sm text-slate-500">
+                                    问卦事项：<span className="text-amber-400">{category}</span>
+                                    {userQuery && <span className="text-slate-400"> · {userQuery}</span>}
                                 </div>
                             )}
-                            {transHexInfo && (
-                                <>
-                                    <span className="text-2xl text-amber-600/50">→</span>
-                                    <div className="text-center">
-                                        <div className="text-3xl md:text-4xl font-bold text-amber-400 font-serif">{transHexInfo.nameZh}</div>
-                                        <div className="mt-2">
-                                            <span className="px-1.5 py-0.5 bg-amber-800/60 border border-amber-600/50 rounded text-[10px] text-amber-100 font-serif whitespace-nowrap">变卦</span>
-                                        </div>
-                                        {/* 变卦卦象 */}
-                                        <div className="mt-3 flex justify-center">
-                                            <HexagramDisplay lines={transLines} small />
-                                        </div>
+
+                            {/* 卦象指引 - 放在卦名区域内 */}
+                            {finalResult?.coreInterpretation && (
+                                <div className="mt-6 pt-4 border-t border-slate-700/50">
+                                    <div className="text-slate-200 leading-relaxed prose prose-invert prose-amber max-w-none text-left">
+                                        <ReactMarkdown>
+                                            {safeRenderString(finalResult.coreInterpretation)}
+                                        </ReactMarkdown>
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
-                        {category && (
-                            <div className="text-center mt-3 text-sm text-slate-500">
-                                问卦事项：<span className="text-amber-400">{category}</span>
-                                {userQuery && <span className="text-slate-400"> · {userQuery}</span>}
-                            </div>
-                        )}
 
-                        {/* 卦象指引 - 放在卦名区域内 */}
-                        {finalResult?.coreInterpretation && (
-                            <div className="mt-6 pt-4 border-t border-slate-700/50">
-                                <div className="text-slate-200 leading-relaxed prose prose-invert prose-amber max-w-none text-left">
-                                    <ReactMarkdown>
-                                        {safeRenderString(finalResult.coreInterpretation)}
-                                    </ReactMarkdown>
-                                </div>
+                        {/* 偈言区域 */}
+                        {finalResult?.verse && (
+                            <div className="bg-gradient-to-b from-amber-900/20 to-slate-900/60 border border-amber-600/30 rounded-xl p-6 text-center">
+                                <pre className="text-xl md:text-2xl text-amber-300 font-serif whitespace-pre-line leading-relaxed">
+                                    {finalResult.verse}
+                                </pre>
                             </div>
                         )}
                     </div>
-
-                    {/* 偈言区域 */}
-                    {finalResult?.verse && (
-                        <div className="bg-gradient-to-b from-amber-900/20 to-slate-900/60 border border-amber-600/30 rounded-xl p-6 text-center">
-                            <pre className="text-xl md:text-2xl text-amber-300 font-serif whitespace-pre-line leading-relaxed">
-                                {finalResult.verse}
-                            </pre>
-                        </div>
-                    )}
+                    {/* 截图区域结束 */}
 
                     {/* 原典补充 - 折叠显示 */}
                     <details className="bg-slate-900/50 border border-slate-700/30 rounded-xl">
@@ -509,7 +558,13 @@ ${finalResult.verse}`;
                     </details>
 
                     {/* 操作按钮 */}
-                    <div className="flex justify-center gap-4 pt-4">
+                    <div id="action-buttons" className="flex justify-center gap-4 pt-4">
+                        <button
+                            onClick={handleSaveImage}
+                            className="px-6 py-2 border border-amber-600/50 text-amber-500 hover:bg-amber-900/20 rounded transition-colors flex items-center gap-2"
+                        >
+                            🖼️ 保存图片
+                        </button>
                         <button
                             onClick={copyToClipboard}
                             className="px-6 py-2 border border-amber-600/50 text-amber-500 hover:bg-amber-900/20 rounded transition-colors flex items-center gap-2"
